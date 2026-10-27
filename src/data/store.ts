@@ -1,4 +1,4 @@
-export type OrderStatus = 'PENDING' | 'PAID' | 'FULFILLED' | 'CANCELLED' | 'REFUNDED';
+export type OrderStatus = 'PENDING' | 'PAID' | 'FULFILLED' | 'CANCELLED' | 'PARTIALLY_REFUNDED' | 'REFUNDED';
 export type PaymentStatus = 'AUTHORIZED' | 'CAPTURED' | 'FAILED' | 'REFUNDED';
 
 export interface ProductRecord {
@@ -41,6 +41,7 @@ export interface OrderRecord {
   items: LineItemRecord[];
   shippingAddress?: AddressRecord;
   paymentId: string;
+  refundedAmount?: number;
 }
 
 export interface PaymentRecord {

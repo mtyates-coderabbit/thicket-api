@@ -16,7 +16,7 @@ type Mutation {
   removeFromCart(cartId: ID!, productId: ID!): Cart!
   "Converts a cart into an order and captures payment."
   checkout(input: CheckoutInput!): CheckoutResult!
-  "Refunds a paid or fulfilled order. Omit amount to refund the full total."
+  "Refunds a paid or fulfilled order. Omit amount to refund the remaining balance."
   refundOrder(orderId: ID!, amount: Float): Order!
 }
 
@@ -66,6 +66,8 @@ type Order {
   total: Float!
   "ISO 4217 currency code."
   currency: String!
+  "Total refunded so far, in USD."
+  refundedAmount: Float!
   payment: Payment!
   shippingAddress: Address
 }
@@ -84,6 +86,8 @@ enum OrderStatus {
   PAID
   FULFILLED
   CANCELLED
+  "Part of the order total has been refunded."
+  PARTIALLY_REFUNDED
   REFUNDED
 }
 
