@@ -1,0 +1,138 @@
+"""
+Thicket storefront API.
+"""
+type Query {
+  "Products available for purchase."
+  products(first: Int = 20): [Product!]!
+  product(id: ID!): Product
+  cart(id: ID!): Cart
+  order(id: ID!): Order
+  "Orders, newest first. Optionally filtered to a single customer."
+  orders(customerId: ID, first: Int = 20): [Order!]!
+}
+
+type Mutation {
+  addToCart(cartId: ID!, productId: ID!, quantity: Int = 1): Cart!
+  removeFromCart(cartId: ID!, productId: ID!): Cart!
+  "Converts a cart into an order and captures payment."
+  checkout(input: CheckoutInput!): CheckoutResult!
+  "Refunds a paid or fulfilled order. Omit amount to refund the full total."
+  refundOrder(orderId: ID!, amount: Float): Order!
+}
+
+type Product {
+  id: ID!
+  sku: String!
+  name: String!
+  description: String
+  "Unit price in USD."
+  price: Float!
+  inStock: Boolean!
+}
+
+type Customer {
+  id: ID!
+  name: String!
+  email: String!
+}
+
+type Cart {
+  id: ID!
+  items: [CartItem!]!
+  "Sum of cart lines before tax, in USD."
+  subtotal: Float!
+}
+
+type CartItem {
+  product: Product!
+  quantity: Int!
+  lineTotal: Float!
+}
+
+type Order {
+  id: ID!
+  "Human-readable order number, e.g. TH-1001."
+  number: String!
+  status: OrderStatus!
+  "ISO 8601 timestamp."
+  createdAt: String!
+  customer: Customer!
+  items: [OrderItem!]!
+  "Sum of line items before tax, in USD."
+  subtotal: Float!
+  "Sales tax, in USD."
+  tax: Float!
+  "Amount charged for the order (subtotal + tax), in USD."
+  total: Float!
+  "ISO 4217 currency code."
+  currency: String!
+  payment: Payment!
+  shippingAddress: Address
+}
+
+type OrderItem {
+  id: ID!
+  product: Product!
+  quantity: Int!
+  "Unit price at the time of purchase, in USD."
+  unitPrice: Float!
+  lineTotal: Float!
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  CANCELLED
+  REFUNDED
+}
+
+type Payment {
+  id: ID!
+  status: PaymentStatus!
+  "Payment method, e.g. card."
+  method: String!
+  "Last four digits of the card, when the method is card."
+  last4: String
+  "Amount captured, in USD."
+  amount: Float!
+  capturedAt: String
+}
+
+enum PaymentStatus {
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+type Address {
+  line1: String!
+  line2: String
+  city: String!
+  region: String!
+  postalCode: String!
+  country: String!
+}
+
+input AddressInput {
+  line1: String!
+  line2: String
+  city: String!
+  region: String!
+  postalCode: String!
+  country: String!
+}
+
+input CheckoutInput {
+  cartId: ID!
+  email: String!
+  shippingAddress: AddressInput!
+  "Tokenized card from the payment form, e.g. tok_visa_4242."
+  cardToken: String!
+}
+
+type CheckoutResult {
+  order: Order!
+  payment: Payment!
+}

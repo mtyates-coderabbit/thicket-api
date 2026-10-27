@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: Typecheck and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  schema-diff:
+    name: Schema diff against main
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Extract base schema
+        run: git show "origin/${{ github.base_ref }}:schema/schema.graphql" > "$RUNNER_TEMP/base.graphql"
+      - name: Diff schema
+        run: npm run schema:diff -- "$RUNNER_TEMP/base.graphql" schema/schema.graphql
+
+  client-operations:
+    name: Validate client operations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: mtyates-coderabbit/thicket-web
+          path: clients/thicket-web
+      - uses: actions/checkout@v4
+        with:
+          repository: mtyates-coderabbit/thicket-mobile
+          path: clients/thicket-mobile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Validate operations against proposed schema
+        run: npm run operations:validate -- schema/schema.graphql clients/thicket-web clients/thicket-mobile

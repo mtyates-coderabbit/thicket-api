@@ -1,0 +1,172 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  high_level_summary: true
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+
+  path_filters:
+    - "!**/package-lock.json"
+
+  path_instructions:
+    - path: "schema/**/*.graphql"
+      instructions: |
+        This file is the public contract consumed by thicket-web and thicket-mobile.
+        For every change, classify it as additive, dangerous, or breaking, and explain why:
+        - Removing or renaming a field, argument, type, or enum value is breaking. Require the
+          replacement to be added first and the old element marked
+          `@deprecated(reason: "Use <replacement>.")` before any removal.
+        - Adding a required argument or required input field without a default is breaking for
+          every existing caller. Suggest an optional argument, a default, or a new field.
+        - Output nullability: changing `T!` to `T` weakens a guarantee clients rely on. Changing
+          `T` to `T!` requires the resolver to always return a value, or errors will null out the
+          parent field.
+        - Input nullability: changing an optional input to required tightens what clients must send.
+        - Adding an enum value is dangerous: operations stay valid but exhaustive client handling
+          (switch statements, lookup maps, generated union types) may break.
+        - Field descriptions document units and meaning. Flag any change to them.
+        For breaking or dangerous changes, look up the selecting operations and fragments in the
+        linked consumer repositories and name the file and operation.
+
+    - path: "src/resolvers/**/*.ts"
+      instructions: |
+        Resolvers must honor the nullability declared in schema/schema.graphql. A resolver for a
+        non-null field must never return null or undefined; throw a GraphQLError with an
+        extensions.code instead. Check that values are returned in the units documented by the
+        field's description (amounts are USD decimal values, e.g. 47.62).
+
+    - path: "src/domain/**/*.ts"
+      instructions: |
+        Domain functions feed resolver output directly. Any change to the units, precision,
+        rounding, or meaning of a returned value (for example dollars vs. cents) is a
+        behavioral contract change even when the schema type is unchanged. Trace the value to the
+        schema fields it backs and to consumer code that formats or computes with it.
+
+    - path: "test/**/*.ts"
+      instructions: |
+        Tests are the executable contract. Flag changed expectations for existing fields
+        (values, units, nullability, error codes) and ask whether the change is intentional and
+        coordinated with consumers. Prefer tests that execute GraphQL operations through
+        createApp() over unit tests of internals.
+
+    - path: "scripts/**/*.ts"
+      instructions: |
+        These scripts gate CI (schema diff and client operation validation). Changes must not
+        weaken failure conditions or exit codes.
+
+    - path: ".github/workflows/**"
+      instructions: |
+        The schema-diff and client-operations jobs are required checks. Flag changes that skip,
+        soften, or remove them.
+
+  pre_merge_checks:
+    title:
+      mode: warning
+      requirements: "Imperative mood, under 72 characters, describing the user-visible change."
+    description:
+      mode: warning
+    custom_checks:
+      - name: "Linked consumer compatibility"
+        mode: error
+        instructions: |
+          Scope: changes to schema/schema.graphql, plus resolver or domain changes that alter the
+          values returned for existing fields.
+
+          Evidence: the committed GraphQL operations and fragments (`src/graphql/**/*.graphql`)
+          and the TypeScript that consumes their results in the linked repositories
+          mtyates-coderabbit/thicket-web and mtyates-coderabbit/thicket-mobile.
+
+          Fail if any of the following is true, and for each finding cite the consumer
+          repository, file path, and operation or fragment name, and describe the consequence:
+          1. A field, argument, type, or enum value that is removed or renamed is still selected
+             or referenced by a consumer operation or fragment.
+          2. A new required argument or required input field (no default) is added to a field or
+             input type that a consumer operation calls without supplying it.
+          3. An output field used by a consumer changes from non-null to nullable, and consumer
+             code reads it without a null check (for example `order.payment.status`).
+          4. A new enum value is added to an enum that a consumer handles exhaustively
+             (switch with an exhaustive default, `Record<Enum, ...>` lookup, or assertNever),
+             unless the PR description links the consumer change that handles it.
+
+          Return Inconclusive if the linked consumer repositories could not be read.
+          Pass otherwise, and list the consumer operations that were checked.
+
+      - name: "Schema evolution policy"
+        mode: error
+        instructions: |
+          Scope: schema/schema.graphql.
+
+          Fail if any of the following is true:
+          1. A field, argument, or enum value is removed without having been marked
+             `@deprecated` on the base branch.
+          2. A field is renamed in place instead of adding the new field and deprecating the old
+             one with `@deprecated(reason: "Use <newField>.")`.
+          3. A required argument or required input field is added without a default value.
+          4. An output field changes from non-null to nullable, or an input changes from optional
+             to required, and the PR description does not explain why and how clients migrate.
+          5. An output field changes from nullable to non-null and the resolver can still return
+             null or undefined.
+
+          When failing, propose the compatible alternative (additive field plus deprecation,
+          optional argument with a default, etc.). Pass if no schema file changed.
+
+      - name: "Behavioral contract changes"
+        mode: error
+        instructions: |
+          Scope: src/domain/**, src/resolvers/**, and test/**.
+
+          Fail if the PR changes the units, scale, precision, rounding, or meaning of a value
+          returned by an existing schema field while keeping the same field name and type
+          (for example returning cents from a field documented as USD dollars), unless ALL of the
+          following are present:
+          1. The field's description in schema/schema.graphql is updated to the new meaning.
+          2. CHANGELOG.md has an entry under "Unreleased" describing the change.
+          3. The PR description identifies the affected consumer code in the linked repositories.
+
+          Also Fail if values that must agree are now computed in different units (for example a
+          payment amount vs. an order total, or a line total vs. a subtotal).
+
+          Pass if no existing field's returned values change meaning.
+
+      - name: "Contract test coverage"
+        mode: warning
+        instructions: |
+          Scope: schema/**, src/**.
+
+          Fail if a schema change or resolver/domain behavior change has no corresponding added
+          or updated test in test/ that executes a GraphQL operation through createApp()
+          covering the new or changed behavior (new field, new argument, new enum value, changed
+          nullability, or changed error path). Pass for documentation-only or tooling-only changes.
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "AGENTS.md"
+      - "docs/**/*.md"
+  linked_repositories:
+    - repository: "mtyates-coderabbit/thicket-web"
+      instructions: |
+        React web storefront that consumes this API through Apollo Client. Its operations and
+        fragments live in src/graphql/**/*.graphql (OrderSummary, PaymentDetails, OrderHistory,
+        OrderDetail, Checkout, RefundOrder, etc.). Types in src/gql/graphql.ts are generated from
+        a vendored copy of this repo's schema. Money is formatted as USD dollars in
+        src/lib/money.ts; OrderStatus is handled exhaustively in src/lib/orderStatus.ts; payment
+        fields are read in src/lib/payment.ts and src/components/OrderDetail.tsx.
+    - repository: "mtyates-coderabbit/thicket-mobile"
+      instructions: |
+        Expo / React Native app that consumes this API. Operations live in
+        src/graphql/**/*.graphql (OrderCard, MyOrders, OrderReceipt, PlaceOrder, etc.). Released
+        mobile builds stay installed for weeks, so a breaking schema change affects users even
+        after this repo is updated. OrderStatus is mapped with a Record lookup in
+        src/lib/statusTheme.ts; amounts are treated as dollars in src/lib/money.ts and converted
+        to cents for analytics in src/lib/analytics.ts.
+
+chat:
+  auto_reply: true
