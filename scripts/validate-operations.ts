@@ -66,7 +66,10 @@ for (const clientDir of clientDirs) {
     const label = doc.definitions
       .map((d) => ('name' in d && d.name ? d.name.value : '(anonymous)'))
       .join(', ');
-    for (const error of errors) {
+    // Fragments from other files are included for validation, but their errors are
+    // reported once, against the file that defines them.
+    const ownErrors = errors.filter((error) => error.nodes?.some((node) => node.loc?.source === doc.loc?.source) ?? true);
+    for (const error of ownErrors) {
       failures.push(`- **${client}** \`${relative(clientDir, path)}\` (${label}): ${error.message}`);
     }
   }
