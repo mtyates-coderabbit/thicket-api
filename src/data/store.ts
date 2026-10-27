@@ -125,26 +125,26 @@ export function createStore(): Store {
         { id: 'li_2', productId: 'prod_shears', quantity: 1, unitPrice: 19.99 },
       ],
       shippingAddress: seedAddress, paymentId: 'pay_1001',
-      payment: { id: 'pay_1001', status: 'CAPTURED', method: 'card', last4: '4242', amount: 47.62, capturedAt: '2026-09-02T15:04:05.000Z' },
+      payment: { id: 'pay_1001', status: 'CAPTURED', method: 'card', last4: '4242', amount: 4762, capturedAt: '2026-09-02T15:04:05.000Z' },
     },
     {
       id: 'ord_1002', number: 'TH-1002', customerId: 'cus_avery', status: 'FULFILLED', createdAt: '2026-09-14T18:30:00.000Z',
       items: [{ id: 'li_3', productId: 'prod_terrarium', quantity: 1, unitPrice: 38.5 }],
       shippingAddress: seedAddress, paymentId: 'pay_1002',
-      payment: { id: 'pay_1002', status: 'CAPTURED', method: 'card', last4: '1881', amount: 41.68, capturedAt: '2026-09-14T18:30:04.000Z' },
+      payment: { id: 'pay_1002', status: 'CAPTURED', method: 'card', last4: '1881', amount: 4168, capturedAt: '2026-09-14T18:30:04.000Z' },
     },
     {
       id: 'ord_1003', number: 'TH-1003', customerId: 'cus_jordan', status: 'PENDING', createdAt: '2026-10-20T09:12:00.000Z',
       items: [{ id: 'li_4', productId: 'prod_tray', quantity: 2, unitPrice: 12.75 }],
       shippingAddress: { ...seedAddress, line1: '18 Birch Court', city: 'Seattle', region: 'WA', postalCode: '98101' },
       paymentId: 'pay_1003',
-      payment: { id: 'pay_1003', status: 'AUTHORIZED', method: 'card', last4: '0005', amount: 27.6 },
+      payment: { id: 'pay_1003', status: 'AUTHORIZED', method: 'card', last4: '0005', amount: 2760 },
     },
     {
       id: 'ord_1004', number: 'TH-1004', customerId: 'cus_jordan', status: 'REFUNDED', createdAt: '2026-08-28T12:00:00.000Z',
       items: [{ id: 'li_5', productId: 'prod_can', quantity: 1, unitPrice: 29.0 }],
       paymentId: 'pay_1004',
-      payment: { id: 'pay_1004', status: 'REFUNDED', method: 'paypal', amount: 31.39, capturedAt: '2026-08-28T12:00:03.000Z' },
+      payment: { id: 'pay_1004', status: 'REFUNDED', method: 'paypal', amount: 3139, capturedAt: '2026-08-28T12:00:03.000Z' },
     },
   ];
   for (const { payment, ...order } of orders) {

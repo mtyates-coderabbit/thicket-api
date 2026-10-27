@@ -17,16 +17,16 @@ const ORDER = /* GraphQL */ `
 `;
 
 describe('orders', () => {
-  it('resolves totals in dollars', async () => {
+  it('resolves order totals', async () => {
     const { execute } = setup();
     const { data, errors } = await execute(ORDER, { id: 'ord_1001' });
     expect(errors).toBeUndefined();
     expect(data.order).toMatchObject({
       number: 'TH-1001',
       status: 'PAID',
-      subtotal: 43.99,
-      tax: 3.63,
-      total: 47.62,
+      subtotal: 4399,
+      tax: 363,
+      total: 4762,
       currency: 'USD',
     });
   });
@@ -34,7 +34,7 @@ describe('orders', () => {
   it('captured payment amount matches the order total', async () => {
     const { execute } = setup();
     const { data } = await execute(ORDER, { id: 'ord_1001' });
-    expect(data.order.payment).toEqual({ status: 'CAPTURED', method: 'card', last4: '4242', amount: 47.62 });
+    expect(data.order.payment).toEqual({ status: 'CAPTURED', method: 'card', last4: '4242', amount: 4762 });
     expect(data.order.payment.amount).toBe(data.order.total);
   });
 
