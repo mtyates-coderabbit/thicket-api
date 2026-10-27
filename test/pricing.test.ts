@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeTotals, lineTotal, roundCurrency } from '../src/domain/pricing';
+import { computeTotals, lineTotal, roundCurrency, toCents } from '../src/domain/pricing';
 
 describe('pricing', () => {
   it('rounds to whole cents', () => {
@@ -7,13 +7,18 @@ describe('pricing', () => {
     expect(roundCurrency(1.005)).toBe(1.01);
   });
 
-  it('computes subtotal, tax, and total in dollars', () => {
+  it('converts dollars to integer cents', () => {
+    expect(toCents(19.99)).toBe(1999);
+    expect(toCents(0.1 + 0.2)).toBe(30);
+  });
+
+  it('computes subtotal, tax, and total without rounding drift', () => {
     expect(
       computeTotals([
         { quantity: 1, unitPrice: 24.0 },
         { quantity: 1, unitPrice: 19.99 },
       ]),
-    ).toEqual({ subtotal: 43.99, tax: 3.63, total: 47.62 });
+    ).toEqual({ subtotal: 4399, tax: 363, total: 4762 });
   });
 
   it('multiplies line totals by quantity', () => {

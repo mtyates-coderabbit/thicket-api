@@ -19,8 +19,8 @@ describe('checkout', () => {
       input: { cartId: 'cart_avery', email: 'avery@example.com', shippingAddress: address, cardToken: 'tok_visa_4242' },
     });
     expect(errors).toBeUndefined();
-    expect(data.checkout.order).toMatchObject({ number: 'TH-1005', status: 'PAID', total: 73.07 });
-    expect(data.checkout.payment).toEqual({ status: 'CAPTURED', last4: '4242', amount: 73.07 });
+    expect(data.checkout.order).toMatchObject({ number: 'TH-1005', status: 'PAID', total: 7307 });
+    expect(data.checkout.payment).toEqual({ status: 'CAPTURED', last4: '4242', amount: 7307 });
     expect(store.carts.get('cart_avery')!.items).toHaveLength(0);
   });
 
