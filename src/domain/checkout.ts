@@ -6,12 +6,13 @@ export interface CheckoutInput {
   cartId: string;
   email: string;
   shippingAddress: AddressRecord;
-  cardToken: string;
+  /** Omitted for invoice orders, which are created PENDING without a payment. */
+  cardToken?: string | null;
 }
 
 export interface CheckoutResult {
   order: OrderRecord;
-  payment: PaymentRecord;
+  payment: PaymentRecord | null;
 }
 
 /** Extracts the last four digits from a token such as `tok_visa_4242`. */
@@ -22,7 +23,8 @@ export function last4FromToken(token: string): string {
 }
 
 /**
- * Converts a cart into a paid order. Prices are snapshotted onto the order's
+ * Converts a cart into an order. With a card token the payment is captured
+ * immediately; without one the order is created as an unpaid invoice. Prices are snapshotted onto the order's
  * line items so later catalog changes do not alter historical orders.
  */
 export function checkout(store: Store, input: CheckoutInput, now = new Date()): CheckoutResult {
@@ -37,37 +39,40 @@ export function checkout(store: Store, input: CheckoutInput, now = new Date()): 
     return { id: store.nextId('li'), productId: product.id, quantity: item.quantity, unitPrice: product.price };
   });
 
-  const last4 = last4FromToken(input.cardToken);
+  const last4 = input.cardToken ? last4FromToken(input.cardToken) : null;
   const { total } = computeTotals(items);
   const orderId = store.nextId('ord');
-  const paymentId = store.nextId('pay');
   const createdAt = now.toISOString();
 
   const order: OrderRecord = {
     id: orderId,
     number: store.nextOrderNumber(),
     customerId: cart.customerId,
-    status: 'PAID',
+    status: last4 ? 'PAID' : 'PENDING',
     createdAt,
     items,
     shippingAddress: input.shippingAddress,
-    paymentId,
   };
-  const payment: PaymentRecord = {
-    id: paymentId,
-    orderId,
-    status: 'CAPTURED',
-    method: 'card',
-    last4,
-    amount: total,
-    capturedAt: createdAt,
-  };
+
+  let payment: PaymentRecord | null = null;
+  if (last4) {
+    payment = {
+      id: store.nextId('pay'),
+      orderId,
+      status: 'CAPTURED',
+      method: 'card',
+      last4,
+      amount: total,
+      capturedAt: createdAt,
+    };
+    order.paymentId = payment.id;
+    store.payments.set(payment.id, payment);
+  }
 
   for (const item of items) {
     store.products.get(item.productId)!.inventory -= item.quantity;
   }
   store.orders.set(order.id, order);
-  store.payments.set(payment.id, payment);
   cart.items = [];
 
   return { order, payment };

@@ -57,4 +57,14 @@ describe('checkout', () => {
     });
     expect(errors?.[0].message).toBe('Seed Starter Tray is out of stock');
   });
+
+  it('creates a pending invoice order when no card is given', async () => {
+    const { execute } = setup();
+    const { data, errors } = await execute(CHECKOUT, {
+      input: { cartId: 'cart_avery', email: 'avery@example.com', shippingAddress: address },
+    });
+    expect(errors).toBeUndefined();
+    expect(data.checkout.order).toMatchObject({ status: 'PENDING', total: 73.07 });
+    expect(data.checkout.payment).toBeNull();
+  });
 });

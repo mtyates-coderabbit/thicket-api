@@ -66,7 +66,8 @@ type Order {
   total: Float!
   "ISO 4217 currency code."
   currency: String!
-  payment: Payment!
+  "Payment for the order. Null for invoice orders that have not been paid yet."
+  payment: Payment
   shippingAddress: Address
 }
 
@@ -128,11 +129,12 @@ input CheckoutInput {
   cartId: ID!
   email: String!
   shippingAddress: AddressInput!
-  "Tokenized card from the payment form, e.g. tok_visa_4242."
-  cardToken: String!
+  "Tokenized card from the payment form, e.g. tok_visa_4242. Omit to place an invoice order that is paid later."
+  cardToken: String
 }
 
 type CheckoutResult {
   order: Order!
-  payment: Payment!
+  "Null for invoice orders."
+  payment: Payment
 }

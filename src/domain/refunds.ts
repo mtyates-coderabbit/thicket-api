@@ -20,8 +20,8 @@ export function refundOrder(store: Store, orderId: string, amount?: number | nul
     throw badInput('Partial refunds are not supported');
   }
 
-  const payment = store.payments.get(order.paymentId);
-  if (!payment) throw notFound('Payment', order.paymentId);
+  const payment = order.paymentId ? store.payments.get(order.paymentId) : undefined;
+  if (!payment) throw badInput(`Order ${order.number} has no payment to refund`);
 
   order.status = 'REFUNDED';
   payment.status = 'REFUNDED';

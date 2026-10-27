@@ -38,13 +38,21 @@ describe('orders', () => {
     expect(data.order.payment.amount).toBe(data.order.total);
   });
 
-  it('every order exposes a payment', async () => {
+  it('returns a null payment for unpaid invoice orders', async () => {
     const { execute } = setup();
-    const { data, errors } = await execute(`{ orders { id payment { id status } } }`);
+    await execute(
+      `mutation($input: CheckoutInput!) { checkout(input: $input) { order { id } } }`,
+      {
+        input: {
+          cartId: 'cart_avery',
+          email: 'avery@example.com',
+          shippingAddress: { line1: '742 Alder Street', city: 'Portland', region: 'OR', postalCode: '97205', country: 'US' },
+        },
+      },
+    );
+    const { data, errors } = await execute(`{ orders(customerId: "cus_avery") { number status payment { id } } }`);
     expect(errors).toBeUndefined();
-    for (const order of data.orders) {
-      expect(order.payment).not.toBeNull();
-    }
+    expect(data.orders[0]).toEqual({ number: 'TH-1005', status: 'PENDING', payment: null });
   });
 
   it('lists orders newest first and filters by customer', async () => {

@@ -40,7 +40,8 @@ export interface OrderRecord {
   createdAt: string;
   items: LineItemRecord[];
   shippingAddress?: AddressRecord;
-  paymentId: string;
+  /** Unset for invoice orders that have not been paid yet. */
+  paymentId?: string;
 }
 
 export interface PaymentRecord {
