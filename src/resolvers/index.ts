@@ -25,6 +25,7 @@ export const resolvers = {
     product: (_: unknown, { id }: { id: string }, { store }: Context) => store.products.get(id) ?? null,
     cart: (_: unknown, { id }: { id: string }, { store }: Context) => store.carts.get(id) ?? null,
     order: (_: unknown, { id }: { id: string }, { store }: Context) => store.orders.get(id) ?? null,
+    stores: (_: unknown, __: unknown, { store }: Context) => [...store.stores.values()],
     orders: (_: unknown, args: { customerId?: string | null; first: number }, { store }: Context) =>
       [...store.orders.values()]
         .filter((o) => !args.customerId || o.customerId === args.customerId)
@@ -53,7 +54,8 @@ export const resolvers = {
       cart.items = cart.items.filter((i) => i.productId !== productId);
       return cart;
     },
-    checkout: (_: unknown, { input }: { input: CheckoutInput }, { store }: Context) => checkout(store, input),
+    checkout: (_: unknown, { storeId, input }: { storeId: string; input: CheckoutInput }, { store }: Context) =>
+      checkout(store, storeId, input),
     refundOrder: (_: unknown, { orderId, amount }: { orderId: string; amount?: number | null }, { store }: Context) =>
       refundOrder(store, orderId, amount),
   },
@@ -84,6 +86,11 @@ export const resolvers = {
       return payment;
     },
     shippingAddress: (order: OrderRecord) => order.shippingAddress ?? null,
+    store: (order: OrderRecord, _: unknown, { store }: Context) => {
+      const record = store.stores.get(order.storeId);
+      if (!record) throw notFound('Store', order.storeId);
+      return record;
+    },
   },
 
   OrderItem: {

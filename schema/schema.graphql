@@ -7,6 +7,7 @@ type Query {
   product(id: ID!): Product
   cart(id: ID!): Cart
   order(id: ID!): Order
+  stores: [Store!]!
   "Orders, newest first. Optionally filtered to a single customer."
   orders(customerId: ID, first: Int = 20): [Order!]!
 }
@@ -14,8 +15,8 @@ type Query {
 type Mutation {
   addToCart(cartId: ID!, productId: ID!, quantity: Int = 1): Cart!
   removeFromCart(cartId: ID!, productId: ID!): Cart!
-  "Converts a cart into an order and captures payment."
-  checkout(input: CheckoutInput!): CheckoutResult!
+  "Converts a cart into an order and captures payment. Orders are fulfilled from the given store."
+  checkout(storeId: ID!, input: CheckoutInput!): CheckoutResult!
   "Refunds a paid or fulfilled order. Omit amount to refund the full total."
   refundOrder(orderId: ID!, amount: Float): Order!
 }
@@ -68,6 +69,14 @@ type Order {
   currency: String!
   payment: Payment!
   shippingAddress: Address
+  "Store the order is fulfilled from."
+  store: Store!
+}
+
+type Store {
+  id: ID!
+  name: String!
+  region: String!
 }
 
 type OrderItem {

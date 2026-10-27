@@ -25,7 +25,8 @@ export function last4FromToken(token: string): string {
  * Converts a cart into a paid order. Prices are snapshotted onto the order's
  * line items so later catalog changes do not alter historical orders.
  */
-export function checkout(store: Store, input: CheckoutInput, now = new Date()): CheckoutResult {
+export function checkout(store: Store, storeId: string, input: CheckoutInput, now = new Date()): CheckoutResult {
+  if (!store.stores.has(storeId)) throw notFound('Store', storeId);
   const cart = store.carts.get(input.cartId);
   if (!cart) throw notFound('Cart', input.cartId);
   if (cart.items.length === 0) throw badInput('Cart is empty');
@@ -52,6 +53,7 @@ export function checkout(store: Store, input: CheckoutInput, now = new Date()): 
     items,
     shippingAddress: input.shippingAddress,
     paymentId,
+    storeId,
   };
   const payment: PaymentRecord = {
     id: paymentId,
