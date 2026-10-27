@@ -78,6 +78,7 @@ export const resolvers = {
     tax: (order: OrderRecord) => computeTotals(order.items).tax,
     total: (order: OrderRecord) => computeTotals(order.items).total,
     currency: () => 'USD',
+    refundedAmount: (order: OrderRecord) => order.refundedAmount ?? 0,
     payment: (order: OrderRecord, _: unknown, { store }: Context) => {
       const payment = store.payments.get(order.paymentId);
       if (!payment) throw notFound('Payment', order.paymentId);
