@@ -30,7 +30,7 @@ Example query:
   orders(customerId: "cus_avery") {
     number
     status
-    total
+    totalAmount
     payment { status last4 }
   }
 }
