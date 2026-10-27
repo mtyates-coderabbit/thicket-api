@@ -8,7 +8,7 @@ const ORDER = /* GraphQL */ `
       status
       subtotal
       tax
-      total
+      totalAmount
       currency
       items { quantity unitPrice lineTotal product { name } }
       payment { status method last4 amount }
@@ -26,7 +26,7 @@ describe('orders', () => {
       status: 'PAID',
       subtotal: 43.99,
       tax: 3.63,
-      total: 47.62,
+      totalAmount: 47.62,
       currency: 'USD',
     });
   });
@@ -35,7 +35,7 @@ describe('orders', () => {
     const { execute } = setup();
     const { data } = await execute(ORDER, { id: 'ord_1001' });
     expect(data.order.payment).toEqual({ status: 'CAPTURED', method: 'card', last4: '4242', amount: 47.62 });
-    expect(data.order.payment.amount).toBe(data.order.total);
+    expect(data.order.payment.amount).toBe(data.order.totalAmount);
   });
 
   it('every order exposes a payment', async () => {

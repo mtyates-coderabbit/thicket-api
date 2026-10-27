@@ -4,7 +4,7 @@ import { setup } from './helpers';
 const CHECKOUT = /* GraphQL */ `
   mutation Checkout($input: CheckoutInput!) {
     checkout(input: $input) {
-      order { number status total items { quantity product { id } } }
+      order { number status totalAmount items { quantity product { id } } }
       payment { status last4 amount }
     }
   }
@@ -19,7 +19,7 @@ describe('checkout', () => {
       input: { cartId: 'cart_avery', email: 'avery@example.com', shippingAddress: address, cardToken: 'tok_visa_4242' },
     });
     expect(errors).toBeUndefined();
-    expect(data.checkout.order).toMatchObject({ number: 'TH-1005', status: 'PAID', total: 73.07 });
+    expect(data.checkout.order).toMatchObject({ number: 'TH-1005', status: 'PAID', totalAmount: 73.07 });
     expect(data.checkout.payment).toEqual({ status: 'CAPTURED', last4: '4242', amount: 73.07 });
     expect(store.carts.get('cart_avery')!.items).toHaveLength(0);
   });

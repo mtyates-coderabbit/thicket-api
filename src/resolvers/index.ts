@@ -76,7 +76,7 @@ export const resolvers = {
     },
     subtotal: (order: OrderRecord) => computeTotals(order.items).subtotal,
     tax: (order: OrderRecord) => computeTotals(order.items).tax,
-    total: (order: OrderRecord) => computeTotals(order.items).total,
+    totalAmount: (order: OrderRecord) => computeTotals(order.items).total,
     currency: () => 'USD',
     payment: (order: OrderRecord, _: unknown, { store }: Context) => {
       const payment = store.payments.get(order.paymentId);
