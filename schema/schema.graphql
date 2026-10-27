@@ -63,7 +63,9 @@ type Order {
   "Sales tax, in USD."
   tax: Float!
   "Amount charged for the order (subtotal + tax), in USD."
-  total: Float!
+  totalAmount: Float!
+  "Amount charged for the order (subtotal + tax), in USD."
+  total: Float! @deprecated(reason: "Use totalAmount.")
   "ISO 4217 currency code."
   currency: String!
   payment: Payment!

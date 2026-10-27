@@ -76,6 +76,8 @@ export const resolvers = {
     },
     subtotal: (order: OrderRecord) => computeTotals(order.items).subtotal,
     tax: (order: OrderRecord) => computeTotals(order.items).tax,
+    totalAmount: (order: OrderRecord) => computeTotals(order.items).total,
+    /** @deprecated Use totalAmount. Kept until clients have migrated. */
     total: (order: OrderRecord) => computeTotals(order.items).total,
     currency: () => 'USD',
     payment: (order: OrderRecord, _: unknown, { store }: Context) => {
